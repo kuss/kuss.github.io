@@ -63,15 +63,12 @@ Presentation
 Education
 ---------
 
-B. S. Candidate in Korea Advanced Institute of Science and Technology
-
-Department of Electrical Engineering
-
-Also Majoring in Mathematical Science
-
-Also Majoring in Computer Science
 
  * Korea Advanced Institute of Science and Techonology (2009.2 ~ present)
+    * B. S. Candidate in Korea Advanced Institute of Science and Technology
+    * Department of Electrical Engineering
+    * Also Majoring in Mathematical Science
+    * Also Majoring in Computer Science
  * Seoul Science High School (2007.3 ~ 2009.2)
 
 
