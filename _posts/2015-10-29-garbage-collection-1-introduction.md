@@ -100,6 +100,17 @@ b.c = C()
 
  이 알고리즘에도 해결해야 하는 문제가 있는데, stop-the-world problem이다. mark를 하는 중간에 mutation이 일어나면 올바르게 mark할 수 없기 때문에 일단 프로그램의 동작이 정지되어야 한다. 즉, GC가 일어날 때 마다 주기적으로 프로그램이 정지하므로 시간에 critical한 프로그램 (ex. 게임) 에서는 적합하지 않다.
 
+## Stop and copy
+
+ Heap을 2개의 part로 나눈다. 하나를 fromSpace, 다른 하나를 toSpace라 한다. 새로운 object들은 fromSpace에 할당되고, fromSpace가 일정 이상 차면 프로그램이 copy가 시작된다.
+
+ 1. root에서 참조되고 있는 object들을 toSpace로 옮긴다.
+ 2. toSpace에서 참조되고 있는 fromSpace 객체들을 toSpace로 옮긴다.
+ 3. toSpace에서 fromSpace로의 참조가 없을 때까지 2를 반복한다.
+ 4. fromSpace의 object들을 할당 해제한다.
+
+ 이 알고리즘은 간단하고 (marking이 필요없다), heap을 compact하게 사용할 수 있다. 하지만, copying cost가 있으며 heap size의 반 정도 밖에 활용하지 못한다는 단점이 있다.
+
 ## Tri-color marking
 
  Mark and sweep이 항상 stop-the-world를 강요하는 문제점을 가지고 있는데에 비해, Tri-color marking은 프로그램 실행중에도 marking이 가능한 알고리즘이다.
