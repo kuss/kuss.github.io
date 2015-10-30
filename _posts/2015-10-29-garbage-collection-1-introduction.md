@@ -4,7 +4,7 @@ title: "Garbage Collection 1 - Introduction"
 description: ""
 date: 2015-10-29
 categories: language
-tags: []
+tags: ["garbage collection", "가비지 콜렉션"]
 ---
 
 ## Introduction
