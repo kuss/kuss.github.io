@@ -106,19 +106,35 @@ b.c = C()
 
  이 알고리즘에서는 object를 3가지 색깔로 분류한다.
 
- * The white set: 더이상 접근 불가능한 object, garbage collection 후보
- * The black set: 접근 가능한 object이고, coloring이 끝난 object. 이 영역에서 가리키는 객체들이 흰색 객체(접근 불가능한 object)를 가리키지 않음
+ * The white set: collector로부터 검사되지 않은 object. 즉, 더이상 접근 불가능한 object이어서 garbage collection 후보이거나, 아직 검사되지 않았거나 두가지 경우가 있다.
+ * The black set: 접근 가능한 object이라고 이미 판별된
  * The gray set: 접근 가능한 object이지만, object에서 가리키는 object들은 검사하지 않음
 
  그리고 다음과 같은 순서로 진행된다.
 
- 1. Gray set에 있는 object를 하나 선택한다.
- 2. Black으로 칠하고, 이 object가 가리키는 모든 object를 gray로 표시한다.
- 3. Gray set에 object가 하나도 남지 않을때까지 반복한다.
+ 1. 처음에 root stack으로부터 pointing된 object들은 gray로 색칠되어 있다. (나머지 object는 white로 색칠되어 있다)
+ 2. Gray set에 있는 object를 하나 선택하고 Black으로 칠한다. 이 object가 가리키는 모든 object를 gray로 표시한다.
+ 3. Gray set에 object가 하나도 남지 않을때까지 2를 반복한다.
  4. Gray set에 object가 없으면 scan이 끝나고, black set은 접근 가능한 객체이며 white set은 접근 불가능한 객체이다.
 
  이 알고리즘의 이점은, stop-the-world없이 mark를 할 수 있다. mark를 하는 중에 object가 추가되더라도 gray set으로 추가되기 때문에 추후 coloring을 할 수 있고, gray set이 비워지면 모든 object들의 reference를 체크했다는 의미가 되므로 안전하게 white set에 있는 object들을 garbage collection 할 수 있다. 또한, gray set이 비워져 있다면 원하는 타이밍에 garbage collection을 진행할 수 있다는 장점도 있다.
 
+ 다만, 이 알고리즘의 가장 중요한 invariant는 black object가 white object를 가리켜서는 안된다는 점이다. (block object는 이미 검사한 object이기 때문에, 여기서 reference되는 object를 다시 검사하지 않는다.) 따라서 garbage collecting 중에 mutator가 reference를 바꾸면 이 알고리즘이 작동하지 않을 수 있다. 아래의 그림을 보면 알 수 있다.
+
+ ![Tri color marking, weakness](http://www.math.grin.edu/~rebelsky/Courses/CS302/99S/Presentations/GC/Tricolor.jpg)
+
+ 위 그림을 보면, Step 1과 Step 2까시 순조롭게 garbage collection이 진행되다가, Step 3에서 mutator가 reference를 바꾸어 버렸다. 따라서 white인 D object를 black인 A object가 직접 가리키게 되었고, D는 garbage collecting 되면 안되지만 이 알고리즘에 따라 gray set이 비워졌을때 메모리가 해제되게 되었다.
+
+ 이 알고리즘의 약점을 보완하려면, mutator가 garbage collector와 호환되도록 구현되어야 한다. 이러한 상황을 막을 수 있는 3가지 방법이 있는데,
+
+ 1. Mutator가 white object를 읽지 못하게 한다. 즉, mutator가 white object를 읽는 순간, 그 object를 gray로 칠한다. (Read barrier)
+ 2. White object가 black object에 의해 참조되는 순간, black object를 gray로 칠한다. (Write) barrier)
+ 3. Garbage collection을 시작하기 전 Snapshot을 준비한다.
+
+ (좀더 친절한 그림과 설명이 필요하다면 reference 4의 50페이지를 참고하자)
+
 # References
  1. [Wikipedia - Garbage collection](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science))
  2. [Wikipedia - Tracing garbage collection](https://en.wikipedia.org/wiki/Tracing_garbage_collection)
+ 3. [Garbage collection lecture - grin](http://www.math.grin.edu/~rebelsky/Courses/CS302/99S/Presentations/GC/)
+ 4. [Garbage collection lecture - jku](http://ssw.jku.at/Misc/SSW/02.GarbageCollection.pdf)
