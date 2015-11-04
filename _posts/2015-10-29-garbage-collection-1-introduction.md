@@ -15,19 +15,19 @@ tags: ["garbage collection", "가비지 콜렉션"]
 
  보통 어떤 메모리 영역을 할당하고, 변수에 그 메모리를 가르키도록 주소값을 할당한다.
 
-{% highlight javascript %}
+```javascript 
 func foo() {
   var a = new Object();
   ...
-{% endhighlight %}
+```
 
  그러면, Object가 만들어지면서 heap영역에 새로운 메모리가 할당되고, 이 메모리에 대한 주소값이 a에 저장된다. 그 이후,
 
-{% highlight javascript %}
+```javascript 
   ...
   return null;
 }
-{% endhighlight %}
+```
 
  foo라는 function이 끝나면, 위에서 만든 Object를 참조하는 변수 a가 사라지면서, 더이상 Object의 주소값을 알 수 없게된다. 이 때 Object가 해제가 가능해진다.
 
@@ -50,7 +50,7 @@ func foo() {
 
  간단해보이는 이 알고리즘은 한가지 큰 문제를 내포하고 있다.
 
-{% highlight python %}
+```python
 class Bar(object):
   foo = None
 
@@ -65,7 +65,7 @@ def action():
 
 def main():
   ...
-{% endhighlight %}
+```
 
  이 프로그램에서, foo와 bar는 서로를 참조한다. 즉, action이라는 함수가 끝나더라도 foo와 bar에 대한 reference count가 1씩 남아있기 때문에, 이 두 object는 영원히 해제되지 않는다. 이를 cyclic reference라 하는데, 이 문제를 해결하기 위해 reference counting을 쓰는 garbage collector들은 cyclic reference를 해결하는 알고리즘을 추가로 구현해야 한다. [[CPython GC]](https://docs.python.org/release/2.5.2/ext/refcounts.html)
 
@@ -77,7 +77,7 @@ def main():
 
  object들이 참조되는 일련의 path를 따라가면서, 참조되었는지를 확인하는 방법이다. 먼저, globally하기 참조된 object들을 root set에 저장하고, 이 root set에서 참조된 object들을 돌면서 참조가 되면 mark한다. 이 mark를 위해 각 object할당 영역에 1비트의 공간을 둔다.
 
-{% highlight python %}
+```python
 class A(object):
   b = None
 
@@ -90,7 +90,7 @@ class C(object):
 a = A()
 a.b = B()
 b.c = C()
-{% endhighlight %}
+```
 
  이렇게 선언된 object들이 있다고 하자. Root set에는 a가 저장되어 있어 먼저 a를 mark한다. 그 후 a에서 참조하고 있는 b를 찾아가 다시 mark하고, b에서 참조하고 있는 c를 찾아가 다시 mark한다. 이를 그림으로 표현하면,
 
