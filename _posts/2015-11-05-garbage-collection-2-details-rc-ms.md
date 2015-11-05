@@ -2,7 +2,7 @@
 layout: post
 title: "Garbage Collection 2 - Details (Reference count, Mark and sweep)"
 description: ""
-date: 2015-10-30
+date: 2015-11-05
 categories: language
 tags: []
 ---
