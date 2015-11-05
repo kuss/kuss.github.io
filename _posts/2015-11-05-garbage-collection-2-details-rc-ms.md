@@ -31,6 +31,7 @@ tags: []
    - count가 0인 object들을 해제한다.
    - 다시 해제되지 않은 object들을 zero count set에 넣는다.
    - 그럼에도 불구하고 zero count set이 꽉 찼다면 zero count set을 증가시킨다.
+
 <!--
  또다른 접근으로 Henry Backer의 deferred increments 도 있다. reference counting을 즉시 증가시키는 것이 아니라, 필요할 때 증가시키는 것이다. local variable과 같은 short-living reference는 counting을 무시하고, heap과 같은 data structure에서 reference될 때는 증가시킨다. (TODO)
 -->
@@ -56,7 +57,7 @@ tags: []
 
  reference를 증가시킬때와 감소시킬때, 각 node (object) 에 coloring을 한다. reference를 증가시킬때는 간단히 count를 증가시키로 black으로 마킹한다. reference를 감소시킬 때 count가 0이 되면, color를 white로 채우고 deallocation을 한다. 만약에 count가 0이 아니라면, red로 마킹하고 garbage collection 후보에 등록한다. 후에 garbage collection이 이루어 질때, 색깔이 red인 node에 대해 mark, sweep, collectWhite의 과정을 거친다.
 
-{% highlight cpp %}
+```cpp
 void decRef(Obj p) {
   p.count--;
   if (p.count == 0) {
@@ -84,7 +85,7 @@ void gc() {
     collectWhite(p);
   }
 }
-{% endhighlight %}
+```
 
  mark, sweep, collectWhite은 아래와 같이 이루어진다.
  * mark 단계
@@ -93,19 +94,19 @@ void gc() {
    - 참조하는 node들로 따라가면서 이전 단계를 반복한다.
 
  이 과정을 반복하면, 각 node에서 참조하는 node 수 만큼 count를 줄일 수 있다. 즉, 만약 내가 참조되는 node와 내가 참조하는 node의 수가 같다면, count가 0이 될 것이다. 
- 
-{% highlight cpp %}
+
+```cpp
 void mark(Obj p) {
   if (p.color != grey) {
     p.color = grey;
     for (all sons q) { q.count--; mark(q); }
   }
 }
-{% endhighlight %}
+```
 
  sweep 과정에서는 count가 0이 된 node들을 white로 바꾼다. 이 때, count가 1 이상이라면 restore과정을 커진다. restore 과정에서는 나 자신을 black으로 바꾸고, 내가 참조하는 다른 black이 아닌 node들을 다시 restore (count 증가, black 마킹) 과정을 거친다.
 
-{% highlight cpp %}
+```cpp
 void sweep(Obj p) {
   if (p.color == grey) {
     if (p.count == 0) {
@@ -122,11 +123,11 @@ void restore(Obj p) {
     if (q.color != black) restore(q);
   }
 }
-{% endhighlight %}
+```
 
  collectWhite 과정에서는 white인 node를 dealloc 한다.
 
-{% highlight cpp %}
+```cpp
 void collectWhite(Obj p) {
   if (p.color == white) {
     p.color = grey;
@@ -134,7 +135,7 @@ void collectWhite(Obj p) {
     dealloc(p);
   }
 }
-{% endhighlight %}
+```
 
 #### Bacon's algorithm
 
@@ -176,7 +177,7 @@ void collectWhite(Obj p) {
  이전 포스트에서, Mark and sweep 알고리즘에 대해 간략하게 소개하였다. 여기서는 mark and sweep 알고리즘을 구현할때의 strategy와, 많은 variants들, 그리고 improvements를 소개한다.
  먼저, Mark and sweep 알고리즘의 cost를 따져보자.
 
-{% highlight cpp %}
+```cpp
 function DFS(x) {
   if (x is a heap pointer)
     if (x is not marked) {
@@ -203,7 +204,7 @@ function Sweep() {
     p = next object pointer after p
   }
 }
-{% endhighlight %} 
+```
 
  Mark phase에서의 cost는, O(R) 이다. (R: 접근 가능한 객체의 수)
  Sweep phase에서의 cost는, O(H) 이다. (H: heap에 있는 모든 객체의 수)
@@ -289,7 +290,7 @@ void mark (Block cur) {
 
  아래는 간단한 pseudocode 이다.
 
-{% highlight go %}
+```go
 compact():
   computeLocations()
   updateReferences()
@@ -304,20 +305,20 @@ computeLocations():
       free += live->header.size
       live += live->header.size
 
-updateReferences(): (update root references)
+updateReferences(): 
   foreach obj in heap:
     if (!marked(obj)) continue
     foreach loc in obj->header.typeInfo->ptrs:
       *(obj+loc) = (*(obj+loc))->header.fwd
 
-relocate(): (described per pool)
+relocate(): 
   scan := start
   while scan < end:
     if isMarked(scan):
       memcpy(scan->header.fwd, scan, scan->header.size)
       unmark(scan->header.fwd)
     scan += scan->header.size
-{% endhighlight %}
+```
 
 ### Mark and Non-sweep (lazy sweep)
 
