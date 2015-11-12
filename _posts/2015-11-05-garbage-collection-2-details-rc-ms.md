@@ -152,9 +152,13 @@ void collectWhite(Obj p) {
 
 ![Distributed reference counting]({{site.url}}/assets/distributed_reference_count1.png)
 
+*Figure 1. Problem of distributed reference counting*
+
  그림에서 보면, 1에서 reference count를 요청하고 성공하여 +1이 되었지만, 2에서 ACK가 전달되지 못해 Proxy P가 3에서 재전송하였고, 4에서 ACK를 받았다. 이 과정에서 실제로 object는 한번 접근했지만 reference count를 2번 증가시키는 참사가 발생하였다. 또한 아래와 같은 경우도 발생할 수 있다.
 
 ![Distributed reference counting]({{site.url}}/assets/distributed_reference_count2.png)
+
+*Figure 2. Problem of distributed reference counting*
 
  이 경우에서도, network의 딜레이로 인해 garbage collection 타이밍을 잡기 난감해 졌다. 분산시스템에서 reference count의 가장 큰 문제점은 reference를 관리하는 곳과 사용하는 곳 사이의 네트워크 딜레이/타이밍 문제로 인해서 생긴다. 이 때 weighted reference counting 기법이 용이하게 쓰인다.
 
@@ -218,7 +222,9 @@ function Sweep() {
 
  DSW은 Deutsch-Schorr-Waite pointer reversal의 준말이며, recursive를 사용하지 않고, 이미 있는 graph의 component를 재활용하여 추가 stack memory를 사용하지 않는 알고리즘이다. 이미 mark를 위해 각 object에 추가로 1비트를 할당했듯이, 몇 bits을 추가하여 해결 가능하다.
 
- ![DSW Algorithm - CS320 Princeton]({{site.url}}/assets/dsw_algorithm.png)
+![DSW Algorithm - CS320 Princeton]({{site.url}}/assets/dsw_algorithm.png)
+
+*Figure 3. DSW Algorithm*
 
  이 알고리즘에서는 back, cur 두개의 pointer를 관리한다. back은 그동안 지나온 pointer에 대한 node를 저장하고, cur는 다음에 검사할 node를 저장한다. root pointer로 부터 돌면서, node를 mark하고 back에 해당 node를 저장한다. 그 다음, 그 node의 child에 대해 돌며 back pointer에 child를 저장하고, child가 부모를 바라보도록 한다. 이런 방식으로 recursive하지 않게 모든 node를 검사할 수 있다.
 
@@ -272,7 +278,9 @@ void mark (Block cur) {
 
  low addresses부터 top addresses까지 돌면서, 처음 mark된 object를 맞닥뜨리면, 첫 available low address로 옮기고, break table에 저장한다. 모든 live object에 대해, table에는 처음 위치와 compaction 이후의 위치의 차이를 저장한다. 그림을 보면 쉽게 이해할 수 있다.
 
- ![Table-based compaction](https://upload.wikimedia.org/wikipedia/en/thumb/0/03/Table-based_heap_compaction_flattened.svg/280px-Table-based_heap_compaction_flattened.svg.png)
+![Table-based compaction](https://upload.wikimedia.org/wikipedia/en/thumb/0/03/Table-based_heap_compaction_flattened.svg/280px-Table-based_heap_compaction_flattened.svg.png)
+
+*Figure 4: Table-based compaction, Wikipedia*
 
  이 break table 역시 heap에 저장되어 있다. object가 relocate가 될 때 heap의 바닥부터 copy해 나가는데, break table이 저장되어 있는 공간을 침범하게 되면 여기에 기록된 record를 옮기게 되고, 이 때문에 break table의 order가 바뀔 수 있다. 이를 rolling the table이라고 저자가 칭했다. compaction이 끝난 후, break table의 sorting이 필요해지기 때문에 O(n log n)이 필요해 진다. 그 후 pointer들은 break table을 보고 자신의 reference를 다시 찾아가게 된다. TODO: 내용 보충
 
