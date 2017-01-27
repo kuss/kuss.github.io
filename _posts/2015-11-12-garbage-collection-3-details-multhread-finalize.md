@@ -26,7 +26,7 @@ tags: []
 
  ![Train algorithm]({{site.url}}/assets/train_algorithm2.png)
 
- *Figure 2: Train algorithm (jku)*
+ *Figure 2: Train algorithm (jku)* 
 
  우리의 목표는 이 한 train안에 죽은 cycle을 다 넣는 것이다. 그 이후 만약 다른 train에서의 참조가 없으면, 이 train을 통째로 dealloc하면 된다.
 
@@ -39,9 +39,10 @@ tags: []
  이제, 어떤 한 train을 GC하려고 하자. 그러면 다음의 과정을 거친다.
 
  1. train의 첫번째 car를 잡고, car를 dealloc하려고 시도한다.
- 2. 다른곳에서 해당 car를 참조하지 않으면, 그 car를 dealloc한다.
- 3. 다른곳에서 해당 car를 참조하고 있다면, 해당 remebered set을 보고, 참조하고 있는 train의 가장 마지막 car로 copy한다.
- 4. 이 과정을 반복하여, 전체 object가 모두 옮겨지거나 dealloc될때까지 반복한다. 또는 train내부의 object를 외부에서 참조하지 않을때까지 반복한다.
+ 2. 다른 곳에서 해당 car를 참조하지 않으면, 그 car를 dealloc한다.
+ 3. 다른 car에서 해당 car를 참조하고 있다면, 해당 remebered set을 보고, 참조하고 있는 train의 가장 마지막 car로 copy한다.
+ 4. root에서 해당 car를 참조하고 있다면, 가장 마지막 train의 가장 마지막 car로 object를 copy한다.
+ 5. 이 과정을 반복하여, 전체 object가 모두 옮겨지거나 dealloc될때까지 반복한다. 또는 train내부의 object를 외부에서 참조하지 않을때까지 반복한다.
 
  이 과정을 pseudo-code로 옮기면 다음과 같다.
 
@@ -68,23 +69,37 @@ else {
 }
 ```
 
- 예제를 통해 이 과정을 좀 더 쉽게 이해해 보자.
+#### 예제
 
- 먼저, 
+ 예제를 통해 이 과정을 좀 더 쉽게 이해해 보자. 
+ <a href = "">[접기]</a>
+ 이 예제에서는, 한 car에는 오직 3개의 object만 들어갈 수 있다 하자.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm3.png)
+ ![Train algorithm]({{site.url}}/assets/train_algorithm_example1.png)
 
- *Figure 3: Train algorithm (jku)* 
+ *Figure 4: Train algorithm example (jku)* 
 
+ 먼저, 첫 car에서 GC를 시작하려 한다. R은 root에서 reference 되어 있으므로 마지막 train의 마지막 car로 간다. A는 train(B)의 가장 마지막 car로 간다. C는 train(F)의 가장 마지막 car로 간다.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm3.png)
+ ![Train algorithm]({{site.url}}/assets/train_algorithm_example2.png)
 
- *Figure 3: Train algorithm (jku)* 
+ *Figure 5: Train algorithm example (jku)* 
 
+ 그러면 해당 car는 비어있고 deallocate되게 된다.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm3.png)
+ ![Train algorithm]({{site.url}}/assets/train_algorithm_example3.png)
 
- *Figure 3: Train algorithm (jku)* 
+ *Figure 6: Train algorithm example (jku)* 
+
+ ![Train algorithm]({{site.url}}/assets/train_algorithm_example4.png)
+
+ *Figure 7: Train algorithm example (jku)* 
+
+ 다음 car에서, S는 train(R)의 가장 마지막 car로 가고, 이 때 남은 공간이 없으니 새로운 car를 만든다. D는 train(C)의 마지막 car로 간다. E는 train(D)의 마지막 car로 간다.
+
+ ![Train algorithm]({{site.url}}/assets/train_algorithm_example5.png)
+
+ *Figure 8: Train algorithm example (jku)* 
 
 ## Generational GC
 
