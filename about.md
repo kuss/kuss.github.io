@@ -1,70 +1,67 @@
 ---
-layout: page
-title: ABOUT ME 
+layout: post
+title: Resume
 permalink: /about/
+date: 2018-06-08
 ---
 
 Software Engineer
 -----------------
 
- * 2 years of experience in mobile game back end engineering
- * 1 years of experience in android graphics engineer (e.g. VR)
+ * 1 years of experience in machine learning area
+ * 4 years of experience in game back-end service engineering
+ * 1 years of experience in computer graphics area
 
-Passionate about designing mobile game/service, solving scalability problem, and building web application.
-
-Also interested in machine learning, data analysis.
+Passionate for creating great values from cutting-edge technology, solving scalability problem, building web/mobile application, and solving real-world problem with machine-learning and data-science.
 
 
 Experience
 ----------
+
+AITRICS
+=======
+
+ [AITRICS](http://www.aitrics.com) is the machine learning healthcare company.
+
+ * Head of Software Development
+ * Develop several web/mobile application
 
 Devsisters Corp.
 ===============
 
   [Devsisters](http://www.devsisters.com) is the game company in Korea, well known for "Cookie Run for Kakao" and "Line Cookierun".
 
-  * Cookierun 2: Lead Server Developer
-  * Line Cookierun: Server Technical Lead, Product Manager
-  * Design & Architect & Develop global user ranking system
-  * Design & Architect & Develop scheduled bulk push system
-  * Improve monitoring system with Graphite and statsD
-  * Working on Standalone QUIC library (devsisters.github.io/goquic)
-  * Resource download network i/o load balancing
-  * Have experience with Hadoop and Scalding.
-  * Tech stack: Java, Spring, Python, Django, MySQL, Couchbase, Hadoop, Scalding, Spark, Golang, Docker
+  * Game publishing: Backend Team Lead
+  * Cookierun 2: Backend Team Lead
+  * Line Cookierun: Backend Team Lead
+  * Cookierun For Kakao: Backend software engineer
+  * Develop several game systems (e.g. ranking, push, billing, ...)
+  * Develop large-scale system and on-demand infrasturcture with AWS, Docker, Kubernetes, etc.
+  * Develop monitoring dashaboard and alarm system with Datadog, Prometheus, Grpahite, etc.
+  * Develop high-capacity log processing system with ELK and Kafka.
+  * Develop balanced static resource distribution system among CDN provdiers.
+  * Develop game operating tools with Django, Vue.js, React, Express.
+  * Analysis bulk logs and build log dashboard with Hadoop, Spark.
+  * Working on Standalone QUIC library
+  * [My 2015 AWS re:Invent presentation](https://www.slideshare.net/AmazonWebServices/gam201-cloud-gaming-architectures-from-mobile-to-social-to-mmo)
+
 
 FXGear Inc.
 ===========
 
   [FXGear](http://www.fxgear.net) is the computer graphics company in Korea.
 
-  * VR game, application (android)
-  * VR developer platform (android)
-  * Fluid Dynamics Simluation in Android
-  * Realistic Paper Simulation in Android
-  * Tech stack: C++, Java, Android NDK, OpenGL
-
-Frograms
-========
-
-  [Frograms](http://www.frograms.com) makes [Watcha!](http://www.watcha.net)
-
-  * Maintain Watcha & add features
-  * Develop Facebook Application (simple game)
-  * Tech stack: Ruby on Rails, HTML, CSS
-
-
-Presentation
-------------
-
- * GAM201: Cloud Gaming Architectures from Mobile to Social to MMO (AWS Re:Invent 2015) [slide](http://www.slideshare.net/AmazonWebServices/gam201-cloud-gaming-architectures-from-mobile-to-social-to-mmo) [youtube](https://www.youtube.com/watch?v=eoLKx3Jb3Qo)
+  * Android VR SDK and VR game samples with NDK and Unity(C#/Javascript).
+  * Working on VR device with Samsung & Oculus with NDK.
+  * Fluid dynamics in Android with NDK/OpenGL ES.
+  * Paper simulation in Android with NDK/OpenGL ES.
 
 
 Education
 ---------
 
 
- * Korea Advanced Institute of Science and Techonology (2009.2 ~ present)
+ * Korea Advanced Institute of Science and Techonology (2009.2 ~ 2017.8)
     * B. S. Candidate in Korea Advanced Institute of Science and Technology
     * Department of Electrical Engineering
     * Also Majoring in Mathematical Science
@@ -77,6 +74,6 @@ Awards
 
  * IPSC2015 25th [[1]](http://ipsc.ksp.sk/2015/results/)
  * IPSC2013 17th [[2]](http://ipsc.ksp.sk/2013/results/)
- * K Cube Ventures Fellow Program 1st Prize
+ * K-Cube Ventures(Kakao Ventures) Fellow Program 1st Prize
 
 

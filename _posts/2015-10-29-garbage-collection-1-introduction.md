@@ -11,18 +11,18 @@ tags: ["garbage collection", "가비지 콜렉션"]
 
  Garbage collection(이하 GC) 이란, 앞으로 접근되지 않을 object의 할당을 해제해 줌으로써 사용할 수 있는 메모리를 확보하는 과정을 말한다. C/C++과 같은 시스템 레벨 언어에서는 GC를 지원하지 않아, 수동으로 malloc(), free()를 호출하여 메모리의 할당과 해제를 관리하지만, Java, Python, Javascript, Golang과 같은 대부분의 High-level languange 에서는 수동으로 메모리를 관리하는 불편함을 없애기 위해 GC를 언어 레벨에서 지원하고 있다.
 
- GC는, ***"어떤 객체가 접근하지 않을 객체인가"*** 를 판단하는 것부터 시작한다. 이를 알기 위해, 객체가 누군가에게 참조되고 있는지 아닌지 체크하고, 아무에게도 참조되고 있지 않은 객체를 해제한다.
+ GC는, **"어떤 객체가 접근하지 않을 객체인가"** 를 판단하는 것부터 시작한다. 이를 알기 위해, 객체가 누군가에게 참조되고 있는지 아닌지 체크하고, 아무에게도 참조되고 있지 않은 객체를 해제한다.
 
  예를 들어, Javascript에서 객체가 선언되는 과정을 살펴보자. 새로운 Object를 선언 한 후 변수 a에 이를 저장해 보자.
  
-```python 
+```python
 def action():
   a = Object()
 ```
 
  그러면, Object가 만들어지면서  [Heap](https://en.wikipedia.org/wiki/Memory_management#HEAP) 영역에 새로운 메모리가 할당되고, 이 메모리에 대한 주소값이 a에 저장된다. 그 이후,
 
-```python 
+```python
   ...
   return
 ```
