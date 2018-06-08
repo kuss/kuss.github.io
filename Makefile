@@ -1,0 +1,2 @@
+publish:
+	yarn run publish
