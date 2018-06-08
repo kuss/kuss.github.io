@@ -150,13 +150,13 @@ void collectWhite(Obj p) {
 
  weighted reference counting기법은, 각 reference에 weight를 매기고, object의 referring을 count 하는게 아니라, reference의 총 weight를 count하는 방법이다. 이 방법은 reference count를 바꿀 필요가 없으므로 reference count에 접근하는 비용이 매우 클때 사용하기 용이하다. 대부분 이런 방법의 garbage collection을 사용하는 곳은 network상에 분산시스템에서 garbage collection을 구현하는 경우이다. 이를 distributed reference counting이라 하는데, 분산 시스템에서 기존의 reference count를 사용하면, 아래와 같은 문제가 발생할 수 있다.
 
-![Distributed reference counting]({{site.url}}/assets/distributed_reference_count1.png)
+{% include image.html path="documentation/distributed_reference_count1.png" %}
 
 *Figure 1. Problem of distributed reference counting*
 
  그림에서 보면, 1에서 reference count를 요청하고 성공하여 +1이 되었지만, 2에서 ACK가 전달되지 못해 Proxy P가 3에서 재전송하였고, 4에서 ACK를 받았다. 이 과정에서 실제로 object는 한번 접근했지만 reference count를 2번 증가시키는 참사가 발생하였다. 또한 아래와 같은 경우도 발생할 수 있다.
 
-![Distributed reference counting]({{site.url}}/assets/distributed_reference_count2.png)
+{% include image.html path="documentation/distributed_reference_count2.png" %}
 
 *Figure 2. Problem of distributed reference counting*
 
@@ -222,7 +222,7 @@ function Sweep() {
 
  DSW은 Deutsch-Schorr-Waite pointer reversal의 준말이며, recursive를 사용하지 않고, 이미 있는 graph의 component를 재활용하여 추가 stack memory를 사용하지 않는 알고리즘이다. 이미 mark를 위해 각 object에 추가로 1비트를 할당했듯이, 몇 bits을 추가하여 해결 가능하다.
 
-![DSW Algorithm - CS320 Princeton]({{site.url}}/assets/dsw_algorithm.png)
+{% include image.html path="documentation/dsw_algorithm.png" %}
 
 *Figure 3. DSW Algorithm*
 

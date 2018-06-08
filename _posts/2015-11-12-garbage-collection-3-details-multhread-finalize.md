@@ -16,7 +16,7 @@ tags: []
 
  먼저, 각 heap을 segment ("car") 단위로 고정된 크기(64KBytes) 로 나눈다.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm1.png)
+{% include image.html path="documentation/train_algorithm1.png" %}
 
  *Figure 1: Train algorithm (jku)*
 
@@ -24,7 +24,7 @@ tags: []
 
  하지만 이 알고리즘에도 커버하지 못하는 영역이 있는데, car간에 죽은 cycle이 생긴 경우이다. 그래서 이 car를 묶어줄 train이라는 개념을 도입한다.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm2.png)
+{% include image.html path="documentation/train_algorithm2.png" %}
 
  *Figure 2: Train algorithm (jku)* 
 
@@ -32,7 +32,7 @@ tags: []
 
  이를 위해 어떤 car에 다른 car에서 참조하는 object를 기억하는 remembered set를 도입한다. 이 한 car의 remembered set에는, 다른 pointer의 address를 저장한다.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm3.png)
+{% include image.html path="documentation/train_algorithm3.png" %}
 
  *Figure 3: Train algorithm (jku)* 
 
@@ -75,29 +75,29 @@ else {
  <a href = "">[접기]</a>
  이 예제에서는, 한 car에는 오직 3개의 object만 들어갈 수 있다 하자.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm_example1.png)
+{% include image.html path="documentation/train_algorithm_example1.png" %}
 
  *Figure 4: Train algorithm example (jku)* 
 
  먼저, 첫 car에서 GC를 시작하려 한다. R은 root에서 reference 되어 있으므로 마지막 train의 마지막 car로 간다. A는 train(B)의 가장 마지막 car로 간다. C는 train(F)의 가장 마지막 car로 간다.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm_example2.png)
+{% include image.html path="documentation/train_algorithm_example2.png" %}
 
  *Figure 5: Train algorithm example (jku)* 
 
  그러면 해당 car는 비어있고 deallocate되게 된다.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm_example3.png)
+{% include image.html path="documentation/train_algorithm_example3.png" %}
 
  *Figure 6: Train algorithm example (jku)* 
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm_example4.png)
+{% include image.html path="documentation/train_algorithm_example4.png" %}
 
  *Figure 7: Train algorithm example (jku)* 
 
  다음 car에서, S는 train(R)의 가장 마지막 car로 가고, 이 때 남은 공간이 없으니 새로운 car를 만든다. D는 train(C)의 마지막 car로 간다. E는 train(D)의 마지막 car로 간다.
 
- ![Train algorithm]({{site.url}}/assets/train_algorithm_example5.png)
+{% include image.html path="documentation/train_algorithm_example5.png" %}
 
  *Figure 8: Train algorithm example (jku)* 
 
