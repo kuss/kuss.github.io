@@ -4,7 +4,7 @@ title: "Garbage Collection 1 - Introduction"
 description: ""
 date: 2015-10-29
 categories: language
-tags: ["garbage collection", "가비지 콜렉션"]
+tags: ["software engineering", "garbage collection", "language"]
 ---
 
 ## Introduction
@@ -33,8 +33,8 @@ def action():
 
 하지만, 최근 생겨나고 있는 많은 언어들에게 GC를 어떻게 구현할 것인지는 굉장히 어렵고 큰 이슈이다. GC과정이 실제 프로그램의 동작에 영향을 주지 않아야 하는데, 위의 방법 대로 GC를 수행하려면, 
 
-     1. 프로그램의 모든 동작을 멈추고 (stop-the-world) 할당된 변수들이 실제로 접근가능한지 파악한다
-     2. 접근 불가능한 변수들을 메모리 해제한다. 
+ 1. 프로그램의 모든 동작을 멈추고 (stop-the-world) 할당된 변수들이 실제로 접근가능한지 파악한다
+ 2. 접근 불가능한 변수들을 메모리 해제한다. 
 
 의 과정을 거쳐야 한다. 이 과정이 잦고 길어질수록 프로그램의 동작이 버벅거리고 길어진다. 그래서 최근의 GC 들은, stop-the-world를 하지 않거나, 이 시간을 최대한 줄이는 것을 목표로 한다.
 
@@ -78,9 +78,15 @@ def action():
 
  이외에도, reference counting 알고리즘은 여러가지 단점이 있다. 
 
-     1. object들의 reference count를 저장할 공간을 추가로 필요로 한다.
-     2. object가 추가로 참조되거나 참조해제 될때 reference count를 변경시켜야 하므로 performance가 좋지 않다.
-     3. multi-thread 환경에서는 reference count를 atomic하게 변경시켜야 한다.
+ 1. object들의 reference count를 저장할 공간을 추가로 필요로 한다.
+ 2. object가 추가로 참조되거나 참조해제 될때 reference count를 변경시켜야 하므로 performance가 좋지 않다.
+ 3. multi-thread 환경에서는 reference count를 atomic하게 변경시켜야 한다.
+
+ 이러한 단점이 있는 반면, reference counting이 가지는 큰 장점들이 있다.
+
+ 1. GC cost가 분산된다. (referencing 되었는지 여부를 한번에 모아서 처리하지 않고, ref/deref가 이루어질때마다 계산함)
+ 2. dereference 된 시점에 거의 바로 알고 삭제할수 있다.
+ 3. 메모리 참조 구조를 몰라도 된다.
 
 
 ## Mark and sweep
@@ -104,7 +110,8 @@ b.c = C()
 
  이렇게 선언된 object들이 있다고 하자. Root set에는 a가 저장되어 있어 먼저 a를 mark한다. 그 후 a에서 참조하고 있는 b를 찾아가 다시 mark하고, b에서 참조하고 있는 c를 찾아가 다시 mark한다. 이를 그림으로 표현하면,
 
-<center>![Mark and sweep, Wikipedia](https://upload.wikimedia.org/wikipedia/commons/4/4a/Animation_of_the_Naive_Mark_and_Sweep_Garbage_Collector_Algorithm.gif)</center>
+<center><img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Animation_of_the_Naive_Mark_and_Sweep_Garbage_Collector_Algorithm.gif" /></center>
+<center>*Mark and sweep, Wikipedia*</center>
 
  이렇게 하면 어떤 object들이 최종적으로 mark되었는지 알 수 있고, mark되지 않은 object들은 접근 불가능한(unreachable) 객체이므로 해제(sweep) 하면 된다. 이를 Mark and sweep 알고리즘이라 한다.
 
@@ -128,19 +135,20 @@ b.c = C()
      4. Gray object가 하나도 남지 않을때까지 3을 반복한다.
      5. Gray object가 없으면 scan이 끝나고, black set은 접근 가능한 객체이며 white set은 접근 불가능한 객체이다.
 
- 이 알고리즘의 이점은, stop-the-world없이 mark를 할 수 있다. mark를 하는 중에 object가 추가되더라도 gray로 추가되기 때문에 추후 coloring을 할 수 있고, gray가 없어지면 object들의 reference를 체크했다는 의미가 되므로 안전하게 white object들을 해제 할 수 있다. 또한, gray가 없다면 원하는 타이밍에 garbage collection을 진행할 수 있다는 장점도 있다.
+ 이 알고리즘의 이점은, stop-the-world없이 mark를 할 수 있다는 점이다. mark를 하는 중에 object가 추가되더라도 gray로 추가되기 때문에 추후 coloring을 할 수 있고, gray가 없어지면 object들의 reference를 체크했다는 의미가 되므로 안전하게 white object들을 해제 할 수 있다. 또한, gray가 없다면 원하는 타이밍에 garbage collection을 진행할 수 있다는 장점도 있다.
 
- 다만, 이 알고리즘의 가장 중요한 단서는 black이 white를 가리켜서는 안된다는 점이다. (block object는 이미 검사한 object이기 때문에, 여기서 reference되는 object를 다시 검사하지 않는다.) 따라서 GC 중에 mutator가 reference를 바꾸면 이 알고리즘이 작동하지 않을 수 있다. 아래의 그림을 보면 알 수 있다.
+ 다만, 이 알고리즘의 가장 중요한 단서는 black이 white를 가리켜서는 안된다는 점이다. (black object는 이미 검사한 object이기 때문에, 여기서 reference되는 object를 다시 검사하지 않는다.) 따라서 GC 중에 mutator가 reference를 바꾸면 이 알고리즘이 작동하지 않을 수 있다. 아래의 그림을 보면 알 수 있다.
 
-<center> ![Tri color marking, weakness](http://www.math.grin.edu/~rebelsky/Courses/CS302/99S/Presentations/GC/Tricolor.jpg)</center>
+<center><img src="http://www.math.grin.edu/~rebelsky/Courses/CS302/99S/Presentations/GC/Tricolor.jpg"/></center>
+<center>*Tri color marking, weakness*</center>
 
  위 그림을 보면, Step 1과 Step 2까시 순조롭게 garbage collection이 진행되다가, Step 3에서 mutator가 reference를 바꾸어 버렸다. 따라서 D(white) 를 A(black)이 가리키게 되었고, D는 해제되면 안되지만 gray가 모두 없어졌을 때 해제되게 된다.
 
  따라서 이 GC를 하려면, compiler의 mutator가 garbage collector와 호환되도록 구현되어야 한다. 이를 위해, 3가지 방법이 존재한다.
 
-     1. Mutator가 white를 읽지 못하게 한다. 즉, mutator가 white를 읽는 순간, 그 object를 gray로 칠한다. (Read barrier, white를 다시 검사해야 할 대상으로 만듬)
-     2. White가 black에 의해 참조되는 순간, black을 gray로 칠한다. (Write barrier, black에 의해 참조된 객체들을 다시 검사해야 할 대상으로 만듬)
-     3. Garbage collection을 시작하기 전 Snapshot을 준비한다.
+ 1. Mutator가 white를 읽지 못하게 한다. 즉, mutator가 white를 읽는 순간, 그 object를 gray로 칠한다. (Read barrier, white를 다시 검사해야 할 대상으로 만듬)
+ 2. White가 black에 의해 참조되는 순간, black을 gray로 칠한다. (Write barrier, black에 의해 참조된 객체들을 다시 검사해야 할 대상으로 만듬)
+ 3. Garbage collection을 시작하기 전 Snapshot을 준비한다.
 
  (좀더 자세한 내용은 이 블로그의 범위를 넘어서니, Reference 4의 50페이지를 참고하자)
 
@@ -148,10 +156,10 @@ b.c = C()
 
  Stop and copy 방법은,  Heap을 2개의 part로 나눈다. 하나를 fromSpace, 다른 하나를 toSpace라 한다. 새로운 object들은 fromSpace에 할당되고, fromSpace가 일정 이상 차면 프로그램이 copy가 시작된다.
 
-     1. root에서 참조되고 있는 object들을 toSpace로 옮긴다.
-     2. toSpace에서 참조되고 있는 fromSpace 객체들을 toSpace로 옮긴다.
-     3. toSpace에서 fromSpace로의 참조가 없을 때까지 2를 반복한다.
-     4. fromSpace의 object들을 할당 해제한다.
+ 1. root에서 참조되고 있는 object들을 toSpace로 옮긴다.
+ 2. toSpace에서 참조되고 있는 fromSpace 객체들을 toSpace로 옮긴다.
+ 3. toSpace에서 fromSpace로의 참조가 없을 때까지 2를 반복한다.
+ 4. fromSpace의 object들을 할당 해제한다.
 
  이 알고리즘은 간단하고, 메모리를 새로 allocate하기 때문에 할당된 객체들이 heap space위에 모여 있게 된다. (일반적인 경우에는, heap space에서 차례대로 memory를 할당하다가 객체들이 해제되면 듬성듬성하게 free space가 남게 된다.) 이를 Heap을 compact하게 사용할 수 있다고 표현한다. 이 방법은, 이후에 Generational GC의 기초적인 아이디어로 사용된다. 
   하지만, 이 알고리즘은 heap space를 반밖에 사용할 수 없다는 단점이 있으며, copying의 cost가 존재한다.

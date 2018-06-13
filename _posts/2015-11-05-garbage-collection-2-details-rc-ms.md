@@ -4,8 +4,10 @@ title: "Garbage Collection 2 - Details (Reference count, Mark and sweep)"
 description: ""
 date: 2015-11-05
 categories: language
-tags: []
+tags: ["software engineering", "garbage collection", "language"]
 ---
+
+{% include mathjax_support.html %}
 
  앞선 포스트에서 Garbage collection 알고리즘이 어떤 종류가 있는지 기본적으로 설명하였다. 이 포스트에서는 이전 포스트에서 다뤘던 Garbage collection중 Reference count, Mark and sweep 의 좀더 자세한 알고리즘에 대해 포스팅 하겠다.
 
@@ -24,19 +26,22 @@ tags: []
  reference / dereference 시마다 항상 counting을 해야 하므로 시간이 걸릴 뿐더러, count가 업데이트 됨으로써 cache가 작동하지 않을 수 있다. 가장 간단한 방법으로는 compiler가 비슷한 시기에 reference가 일어나는 object들을 모아 한번에 해주는 것이다. Deutsch-Bobrow는 대부분의 reference가 local variable에서 온다는 점을 착안하여, 이 때에는 counting을 하지 않고, heap에서 참조될 때에만 counting을 하도록 하였다. ^[4]
 
 #### Deutsch-Bobrow deferred reference counting ^[5] 
+ 이 알고리즘의 키 아이디어는 다음과 같다.
+
+ 1. zero count인 object를 모아뒀다가 한번에 해제한다.
+ 2. 대부분의 reference는 local variable로 부터 생기니 stack이나 register로부터 reference 된 object들은 무시하자.
+
+ 다음의 과정으로 수행된다.
+
  - stack에서 reference된 object들은 count하지 않는다.
  - reference count가 0이 되면, zero count set에 저장한다.
  - zero count set이 꽉 차면, 
-   - stack / register을 돌면서 참조된 object의 count를 증가시킨다.
+   - stack 을 돌면서 참조된 object의 count를 증가시킨다.
    - count가 0인 object들을 해제한다.
-   - 다시 해제되지 않은 object들을 zero count set에 넣는다.
+   - 다시 stack에 의해 참조된 object의 count를 감소시킨 후, 0이 된 object를 zero count set에 넣는다.
    - 그럼에도 불구하고 zero count set이 꽉 찼다면 zero count set을 증가시킨다.
 
-<!--
- 또다른 접근으로 Henry Backer의 deferred increments 도 있다. reference counting을 즉시 증가시키는 것이 아니라, 필요할 때 증가시키는 것이다. local variable과 같은 short-living reference는 counting을 무시하고, heap과 같은 data structure에서 reference될 때는 증가시킨다. (TODO)
--->
-
- 가장 큰 performance 향상을 보여준, 대표적인 improvement는 Levanoni and Petrank가 2001년 발표한 update coalescing method라는 알고리즘이다. (보통 reference count의 improvements 중 가장 대표적인 알고리즘으로 꼽힌다.) 이 알고리즘의 컨셉은 많은 필요없는 reference count update를 줄이는 것인데, 예를 들어 어떤 pointer가 O1, O2, ..., On을 차례로 가르키게 될때, reference count를 O1--, O2++, O2--, O3++, ..., On++을 하는 것이 아니라 O1--, On++을 하는 것이다. 자세한 내용은 [논문](www.cs.technion.ac.il/~erez/Papers/refcount.ps)을 참고하자. (앞으로 이 알고리즘에 대해서 포스팅 계획이 있다.)
+ 가장 큰 performance 향상을 보여준, 대표적인 improvement는 Levanoni and Petrank가 2001년 발표한 update coalescing method라는 알고리즘이다. 이 알고리즘의 컨셉은 많은 필요없는 reference count update를 줄이는 것인데, 예를 들어 어떤 pointer가 $O_1$, $O_2$, ..., $O_n$을 차례로 가르키게 될때, reference count를 $rc(O_1)$--, $rc(O_2)$++, $rc(O_2)$--, $rc(O_3)$++, ..., $rc(O_n)$++을 하는 것이 아니라 $rc(O_1)$--, $rc(O_n)$++을 하는 것이다. 자세한 내용은 [논문](http://www.cs.technion.ac.il/~erez/Papers/refcount.ps)을 참고하자.
 
  또한, 이후로 object의 age에 따라 (object가 언제 만들어 졌는지) 알고리즘을 다르게 구성함으로써 performance를 향상시키는 방향으로 최근의 연구가 진행되고 있다. 2003년에 발표된 Blackburn and Mckinley's ulterior reference counting method [논문](https://dx.doi.org/10.1145%2F949305.949336), 2006년 발표된 Paz's의 [박사논문] 도 있다.
  
