@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Jaeman An | Garbage Collection 3 - Details (Train algorithm, etc)</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta property="og:title" content="Garbage Collection 3 - Details (Train algorithm, etc)">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kuss.github.io/posts/garbage-collection-3-details-multhread-finalize">
+  <meta property="og:description" content="">
+  <meta property="og:site_name" content="Jaeman An">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:url" content="https://kuss.github.io/posts/garbage-collection-3-details-multhread-finalize">
+  <meta name="twitter:title" content="Garbage Collection 3 - Details (Train algorithm, etc)">
+  <meta name="twitter:description" content="">
+
+  
+    <meta property="og:image" content="https://kuss.github.io/assets/og-image-ee46bbc61b334e821e81534b1fd43f3fee6f020ec174b3c2114445695fd48c01.jpg">
+    <meta name="twitter:image" content="https://kuss.github.io/assets/og-image-ee46bbc61b334e821e81534b1fd43f3fee6f020ec174b3c2114445695fd48c01.jpg">
+  
+
+  <link href="https://kuss.github.io/feed.xml" type="application/rss+xml" rel="alternate" title="Jaeman An Last 10 blog posts" />
+
+  
+
+  
+    <link rel="icon" type="image/x-icon" href="/assets/favicon-dark-11327753546b2135c989eee5cd83497a2734b702928d016839d795f6c706e3d5.ico">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon-dark-d161409442b7e523089f24d08d0a55951549ece7504207c376d53b020713494d.png">
+    <link rel="stylesheet" type="text/css" href="/assets/dark-b3f75b06c6a78d2536afe06cfb67afc8b1bcc68f2e645e5563b46308bb142a6b.css">
+  
+</head>
+
+<body>
+  <main>
+    <div class="grid grid-centered">
+      <div class="grid-cell">
+        <nav class="header-nav scrollappear">
+  <a href="/" class="header-logo" title="Jaeman An">Jaeman An</a>
+  <ul class="header-links">
+    
+    
+      <li>
+        <a href="https://twitter.com/ajmbell" rel="noreferrer noopener" target="_blank" title="Twitter">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-twitter">
+  <use href="/assets/twitter-8842c33965263ad1b03a978406826677a668f94125d5837e70ab83f24b3213a7.svg#icon-twitter" xlink:href="/assets/twitter-8842c33965263ad1b03a978406826677a668f94125d5837e70ab83f24b3213a7.svg#icon-twitter"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+    
+    
+      <li>
+        <a href="https://github.com/ajmbell" rel="noreferrer noopener" target="_blank" title="GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-github">
+  <use href="/assets/github-094f81040819f34343ee6ffff0980f17e2807b08b595eaaf66ae3554934fd78d.svg#icon-github" xlink:href="/assets/github-094f81040819f34343ee6ffff0980f17e2807b08b595eaaf66ae3554934fd78d.svg#icon-github"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+      <li>
+        <a href="https://www.linkedin.com/in/jaeman-an-7994778a" rel="noreferrer noopener" target="_blank" title="LinkedIn">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-linkedin">
+  <use href="/assets/linkedin-cdc5c107044324a3dfbea2e9ead15873f8dee304c37d73a046988956b706256e.svg#icon-linkedin" xlink:href="/assets/linkedin-cdc5c107044324a3dfbea2e9ead15873f8dee304c37d73a046988956b706256e.svg#icon-linkedin"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      <li>
+        <a href="mailto:ajmbell@gmail.com" title="Email">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-email">
+  <use href="/assets/email-782473193bf750036fdb90e8daa075508a20509d01854c09f3237c144a3f0601.svg#icon-email" xlink:href="/assets/email-782473193bf750036fdb90e8daa075508a20509d01854c09f3237c144a3f0601.svg#icon-email"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+  </ul>
+</nav>
+
+        <article class="article scrollappear">
+          <header class="article-header">
+            <h1>Garbage Collection 3 - Details (Train algorithm, etc)</h1>
+            <p></p>
+            <div class="article-list-footer">
+              <span class="article-list-date">
+                November 12, 2015
+              </span>
+              <div class="article-list-tags">
+                
+              </div>
+            </div>
+          </header>
+
+          <div class="article-content">
+            <h2 id="train-algorithm">Train algorithm</h2>
+
+<p>이전 포스트에서 설명했던 Stop &amp; Copy algorithm의 진화판 알고리즘이다. 기본 아이디어는,</p>
+<ul>
+  <li>메모리를 작은 block으로 나눈다.</li>
+  <li>stop-and-copy garbage collection을 각 block에 대해 개별적으로 진행한다.</li>
+  <li>block이 작으므로 더 짧게 pause를 수행할 수 있다.</li>
+</ul>
+
+<p>먼저, 각 heap을 segment (“car”) 단위로 고정된 크기(64KBytes) 로 나눈다.</p>
+
+<p><a href="/assets/documentation/train_algorithm1-3352e1e11603ef4eecede29c3b8df4115627e4cca5f0cdc5f41c6e8525b6a970.png">
+  <img src="/assets/documentation/train_algorithm1-3352e1e11603ef4eecede29c3b8df4115627e4cca5f0cdc5f41c6e8525b6a970.png" alt="" class="zooming" data-rjs="/assets/documentation/train_algorithm1-3352e1e11603ef4eecede29c3b8df4115627e4cca5f0cdc5f41c6e8525b6a970.png" data-zooming-width="797" data-zooming-height="198" />
+</a></p>
+
+<p><em>Figure 1: Train algorithm (jku)</em></p>
+
+<p>그런 다음, GC때 하나의 semgent를 보고 live object를 다른 car로 옮긴 다음, 해당 car를 release한다. 이 알고리즘의 장점은, 하나의 car만 GC하기 때문에 굉장히 빠르다. 다만, Object가 한 car 안에 들어가지 못하는 경우는 여러 car에 나뉘어 관리되어야 한다.</p>
+
+<p>하지만 이 알고리즘에도 커버하지 못하는 영역이 있는데, car간에 죽은 cycle이 생긴 경우이다. 그래서 이 car를 묶어줄 train이라는 개념을 도입한다.</p>
+
+<p><a href="/assets/documentation/train_algorithm2-2832a0d8064fd3e48a6a58fdc8f1831e37428c02c40c0aac2fe6a3c0d54f25be.png">
+  <img src="/assets/documentation/train_algorithm2-2832a0d8064fd3e48a6a58fdc8f1831e37428c02c40c0aac2fe6a3c0d54f25be.png" alt="" class="zooming" data-rjs="/assets/documentation/train_algorithm2-2832a0d8064fd3e48a6a58fdc8f1831e37428c02c40c0aac2fe6a3c0d54f25be.png" data-zooming-width="518" data-zooming-height="245" />
+</a></p>
+
+<p><em>Figure 2: Train algorithm (jku)</em></p>
+
+<p>우리의 목표는 이 한 train안에 죽은 cycle을 다 넣는 것이다. 그 이후 만약 다른 train에서의 참조가 없으면, 이 train을 통째로 dealloc하면 된다.</p>
+
+<p>이를 위해 어떤 car에 다른 car에서 참조하는 object를 기억하는 remembered set를 도입한다. 이 한 car의 remembered set에는, 다른 pointer의 address를 저장한다.</p>
+
+<p><a href="/assets/documentation/train_algorithm3-4a145cb2d7568a0f6e42c3c95f0fb172342234feaa5d2cdfb735942fcdd4a291.png">
+  <img src="/assets/documentation/train_algorithm3-4a145cb2d7568a0f6e42c3c95f0fb172342234feaa5d2cdfb735942fcdd4a291.png" alt="" class="zooming" data-rjs="/assets/documentation/train_algorithm3-4a145cb2d7568a0f6e42c3c95f0fb172342234feaa5d2cdfb735942fcdd4a291.png" data-zooming-width="357" data-zooming-height="138" />
+</a></p>
+
+<p><em>Figure 3: Train algorithm (jku)</em></p>
+
+<p>이제, 어떤 한 train을 GC하려고 하자. 그러면 다음의 과정을 거친다.</p>
+
+<ol>
+  <li>train의 첫번째 car를 잡고, car를 dealloc하려고 시도한다.</li>
+  <li>다른 곳에서 해당 car를 참조하지 않으면, 그 car를 dealloc한다.</li>
+  <li>다른 car에서 해당 car를 참조하고 있다면, 해당 remebered set을 보고, 참조하고 있는 train의 가장 마지막 car로 copy한다.</li>
+  <li>root에서 해당 car를 참조하고 있다면, 가장 마지막 train의 가장 마지막 car로 object를 copy한다.</li>
+  <li>이 과정을 반복하여, 전체 object가 모두 옮겨지거나 dealloc될때까지 반복한다. 또는 train내부의 object를 외부에서 참조하지 않을때까지 반복한다.</li>
+</ol>
+
+<p>이 과정을 pseudo-code로 옮기면 다음과 같다.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">there</span> <span class="n">are</span> <span class="n">no</span> <span class="n">pointers</span> <span class="n">to</span> <span class="n">the</span> <span class="n">first</span> <span class="n">train</span> <span class="n">from</span> <span class="n">outside</span> <span class="k">this</span> <span class="n">train</span><span class="p">)</span>
+  <span class="n">release</span> <span class="n">the</span> <span class="n">whole</span> <span class="n">first</span> <span class="n">train</span><span class="p">;</span>
+<span class="k">else</span> <span class="p">{</span>
+  <span class="n">car</span> <span class="o">=</span> <span class="n">first</span> <span class="n">car</span> <span class="n">of</span> <span class="n">first</span> <span class="n">train</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">all</span> <span class="n">p</span> <span class="n">in</span> <span class="n">rememberedSet</span><span class="p">(</span><span class="n">car</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">copy</span> <span class="n">p</span> <span class="n">obj</span> <span class="n">to</span> <span class="n">the</span> <span class="n">last</span> <span class="n">car</span> <span class="n">of</span> <span class="n">train</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+    <span class="k">if</span> <span class="n">full</span><span class="p">,</span> <span class="n">start</span> <span class="n">a</span> <span class="k">new</span> <span class="n">car</span> <span class="n">in</span> <span class="n">train</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">all</span> <span class="n">roots</span> <span class="n">p</span> <span class="n">that</span> <span class="n">point</span> <span class="n">to</span> <span class="n">car</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">copy</span> <span class="n">p</span> <span class="n">obj</span> <span class="n">to</span> <span class="n">the</span> <span class="n">last</span> <span class="n">car</span> <span class="n">of</span> <span class="n">the</span> <span class="n">last</span> <span class="n">train</span> <span class="p">(</span><span class="n">not</span> <span class="n">to</span> <span class="n">the</span> <span class="n">first</span> <span class="n">train</span><span class="o">!</span><span class="p">);</span>
+    <span class="k">if</span> <span class="n">full</span><span class="p">,</span> <span class="n">start</span> <span class="n">a</span> <span class="k">new</span> <span class="n">train</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">all</span> <span class="n">p</span> <span class="n">in</span> <span class="n">copied</span> <span class="n">objects</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="n">points</span> <span class="n">to</span> <span class="n">car</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">copy</span> <span class="n">pobj</span> <span class="n">to</span> <span class="n">last</span> <span class="n">car</span> <span class="n">of</span> <span class="n">train</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+      <span class="k">if</span> <span class="n">full</span><span class="p">,</span> <span class="n">start</span> <span class="n">a</span> <span class="k">new</span> <span class="n">car</span> <span class="n">in</span> <span class="n">train</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="n">points</span> <span class="n">to</span> <span class="n">a</span> <span class="n">car</span> <span class="n">m</span> <span class="n">in</span> <span class="n">front</span> <span class="n">of</span> <span class="n">car</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+      <span class="n">add</span> <span class="n">p</span> <span class="n">to</span> <span class="n">rememberedSet</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
+  <span class="n">release</span> <span class="n">car</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h4 id="예제">예제</h4>
+
+<p>예제를 통해 이 과정을 좀 더 쉽게 이해해 보자. 
+ <a href="">[접기]</a>
+ 이 예제에서는, 한 car에는 오직 3개의 object만 들어갈 수 있다 하자.</p>
+
+<p><a href="/assets/documentation/train_algorithm_example1-2e52f8cdc86881830b627194222df32af1d8e7b7d289a346904eeb6260fb66b3.png">
+  <img src="/assets/documentation/train_algorithm_example1-2e52f8cdc86881830b627194222df32af1d8e7b7d289a346904eeb6260fb66b3.png" alt="" class="zooming" data-rjs="/assets/documentation/train_algorithm_example1-2e52f8cdc86881830b627194222df32af1d8e7b7d289a346904eeb6260fb66b3.png" data-zooming-width="388" data-zooming-height="275" />
+</a></p>
+
+<p><em>Figure 4: Train algorithm example (jku)</em></p>
+
+<p>먼저, 첫 car에서 GC를 시작하려 한다. R은 root에서 reference 되어 있으므로 마지막 train의 마지막 car로 간다. A는 train(B)의 가장 마지막 car로 간다. C는 train(F)의 가장 마지막 car로 간다.</p>
+
+<p><a href="/assets/documentation/train_algorithm_example2-7acd4d13a3e905b49e093333d0d0d380fedca56916e9050516526c3223b631ee.png">
+  <img src="/assets/documentation/train_algorithm_example2-7acd4d13a3e905b49e093333d0d0d380fedca56916e9050516526c3223b631ee.png" alt="" class="zooming" data-rjs="/assets/documentation/train_algorithm_example2-7acd4d13a3e905b49e093333d0d0d380fedca56916e9050516526c3223b631ee.png" data-zooming-width="440" data-zooming-height="253" />
+</a></p>
+
+<p><em>Figure 5: Train algorithm example (jku)</em></p>
+
+<p>그러면 해당 car는 비어있고 deallocate되게 된다.</p>
+
+<p><a href="/assets/documentation/train_algorithm_example3-ccff3f622a1048ecbe42e3e191f813923b4dfc9c40c35b84d94c69b97f68ca1a.png">
+  <img src="/assets/documentation/train_algorithm_example3-ccff3f622a1048ecbe42e3e191f813923b4dfc9c40c35b84d94c69b97f68ca1a.png" alt="" class="zooming" data-rjs="/assets/documentation/train_algorithm_example3-ccff3f622a1048ecbe42e3e191f813923b4dfc9c40c35b84d94c69b97f68ca1a.png" data-zooming-width="436" data-zooming-height="263" />
+</a></p>
+
+<p><em>Figure 6: Train algorithm example (jku)</em></p>
+
+<p><a href="/assets/documentation/train_algorithm_example4-f39fbee12ad0745a0c8451cd84a02dabe9f87ef2f6b4daccf1c27f3c838d8d3a.png">
+  <img src="/assets/documentation/train_algorithm_example4-f39fbee12ad0745a0c8451cd84a02dabe9f87ef2f6b4daccf1c27f3c838d8d3a.png" alt="" class="zooming" data-rjs="/assets/documentation/train_algorithm_example4-f39fbee12ad0745a0c8451cd84a02dabe9f87ef2f6b4daccf1c27f3c838d8d3a.png" data-zooming-width="551" data-zooming-height="258" />
+</a></p>
+
+<p><em>Figure 7: Train algorithm example (jku)</em></p>
+
+<p>다음 car에서, S는 train(R)의 가장 마지막 car로 가고, 이 때 남은 공간이 없으니 새로운 car를 만든다. D는 train(C)의 마지막 car로 간다. E는 train(D)의 마지막 car로 간다.</p>
+
+<p><a href="/assets/documentation/train_algorithm_example5-2da445da24466457deb3886c0586702832ff2986d6836a491d0f8299c74ac111.png">
+  <img src="/assets/documentation/train_algorithm_example5-2da445da24466457deb3886c0586702832ff2986d6836a491d0f8299c74ac111.png" alt="" class="zooming" data-rjs="/assets/documentation/train_algorithm_example5-2da445da24466457deb3886c0586702832ff2986d6836a491d0f8299c74ac111.png" data-zooming-width="543" data-zooming-height="263" />
+</a></p>
+
+<p><em>Figure 8: Train algorithm example (jku)</em></p>
+
+<h2 id="generational-gc">Generational GC</h2>
+
+<p>최근에 가장 많이 쓰이는, 가장 넓은 범위를 가지는 GC 방법이다.</p>
+
+<h2 id="gc-in-multi-thread-system">GC in multi-thread system</h2>
+
+<p>Multi-thread system에서 GC를 할때 문제는,</p>
+
+<ul>
+  <li>mutator들이 여러 thread에 있기 때문에 GC를 하기 위해서는 항상 stop-the-world가 필요하다.</li>
+  <li>GC를 할 수 없는 위치도 존재할 수 있다. (아래 코드에서 2번째와 3번째)</li>
+</ul>
+
+<pre><code class="language-asm">MOV EAX, objAdr
+ADD EAX, fieldOffset
+# GC is not allowed here, because the object may be moved
+MOV [EAX], value
+</code></pre>
+
+<p>그래서 GC를 하기 위해서 Safepoint를 판별해야 하는데, Safepoint라 함은 GC를 할 수 있는 곳이며, thread들이 멈출 수 있는 지점을 의미한다. Safepoint의 조건은 다음과 같다.</p>
+
+<ul>
+  <li>For every safepoint there is
+    <ul>
+      <li>a table of pointer offsets in the current stack frame</li>
+      <li>a list of registers containing pointers</li>
+    </ul>
+  </li>
+</ul>
+
+<p>safepoint에서 thread를 멈추고 GC를 하기 위해 1. Safepoint polling 2. Safepoint patching 두가지 중 한가지 방법으로 implement를 한다.</p>
+
+<h3 id="safepoint-polling">Safepoint polling</h3>
+
+<p>GC가 pending중일때, mutator가 safepoint를 체크한다.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">gcPending</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="n">suspend</span> <span class="n">all</span> <span class="n">threads</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">each</span> <span class="kr">thread</span> <span class="n">t</span><span class="p">)</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">not</span> <span class="n">at</span> <span class="n">a</span> <span class="n">safepoint</span><span class="p">)</span> <span class="n">t</span><span class="p">.</span><span class="n">resume</span><span class="p">();</span> <span class="c1">// let it run to the next safepoint</span>
+<span class="c1">// all threads are at safepoints</span>
+<span class="n">collect</span><span class="p">();</span>
+<span class="n">gcPending</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="n">resume</span> <span class="n">all</span> <span class="n">threads</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>이를 위해 아래의 모든 포인트에 Compiler가 아래의 코드를 집어넣는다.</p>
+
+<ul>
+  <li>method 시작</li>
+  <li>method 끝</li>
+  <li>system call</li>
+  <li>backward jump</li>
+</ul>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">gcPending</span><span class="p">)</span> <span class="n">suspend</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>혹은,</p>
+
+<pre><code class="language-asm">MOV dummyAdr, 0 # if gc pending, dummyAddr -&gt; readonly -&gt; trap!
+</code></pre>
+
+<h3 id="safepoint-patching">Safepoint patching</h3>
+
+<p>Safepoints에 thread suspend를 위한 instruction을 patch 하는 방식이다.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">suspend</span> <span class="n">all</span> <span class="n">threads</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">each</span> <span class="kr">thread</span> <span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">patch</span> <span class="n">next</span> <span class="n">safepoint</span> <span class="n">with</span> <span class="n">a</span> <span class="n">trap</span> <span class="n">instruction</span><span class="p">;</span>
+  <span class="n">t</span><span class="p">.</span><span class="n">resume</span><span class="p">();</span> <span class="c1">// let it run until the next safepoint</span>
+<span class="p">}</span>
+<span class="c1">// all threads are at safepoints</span>
+<span class="n">collect</span><span class="p">();</span>
+<span class="n">restore</span> <span class="n">all</span> <span class="n">patched</span> <span class="n">instructions</span><span class="p">;</span>
+<span class="n">resume</span> <span class="n">all</span> <span class="n">threads</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="finalization">Finalization</h2>
+
+<p>GC에서 또 한가지 고려해야할 사항은 finalization이다. 일반적으로 Java에서 object가 dealloc되기 전에 해야할 행동들을 아래와 같이 finalize를 override하여 구현한다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">T</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">finalize</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+    <span class="o">...</span> <span class="c1">// cleanup work</span>
+     <span class="kd">super</span><span class="o">.</span><span class="na">finalize</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>이제 이와 같은 finalization을 GC과정 중에 어떻게 구현할 수 있는지 보자.</p>
+
+<p>finalize함수가 구현되면, finalization list에 추가된다. (이 때, finalization list에 추가되는 object는 pointer로 취급되지 않는다; garbage collection을 막지 않기 위함) finalize를 GC 중간에 하게 되면, stop-the-world시간이 엄청나게 길어질 수 있다. 그래서 Java나 .NET에서는, finalize를 background에서 수행한다.</p>
+
+<p>첫번째 GC에서는 finalization list에 있는 unmarked object를 돌면서 worklist에 추가한다.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mark</span><span class="p">();</span>
+<span class="k">for</span> <span class="n">all</span> <span class="n">unmarked</span> <span class="n">objects</span> <span class="n">obj</span> <span class="n">in</span> <span class="n">the</span> <span class="n">finalization</span> <span class="n">list</span>
+  <span class="n">worklist</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span>
+  <span class="n">set</span> <span class="n">mark</span> <span class="n">bit</span> <span class="n">of</span> <span class="n">obj</span>
+<span class="n">sweep</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>그리고 background에서는 finalize를 호출하고, mark bit를 clear한 후 finalization list에서 삭제한다.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>for all obj in the worklist
+  obj.finalize();
+  clear mark bit of obj
+  remove obj from finalization list
+</code></pre></div></div>
+
+<p>두 과정을 거친 object는 다음 GC때 collect될 것이다. 하지만 finalize가 있는 경우 object dealloc이 delay됨을 확인할 수 있다.</p>
+
+<p>finalize 중간에 object가 다시 살아날 수도 있다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">protected</span> <span class="kt">void</span> <span class="nf">finalize</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">globalVar</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>이 경우 다음 GC때 이 object가 살아있음을 발견하고 GC하지 않는다. object가 다시 없어진 후에는 finalizer를 다시 부르지 않는다.</p>
+
+<h2 id="performance--recent-garbage-collector">Performance &amp; Recent garbage collector</h2>
+
+<p>Performance[edit]
+Performance of tracing garbage collectors – both latency and throughput – depends significantly on the implementation, workload, and environment. Naive implementations or use in very memory-constrained environments, notably embedded systems, can result in very poor performance compared with other methods, while sophisticated implementations and use in environments with ample memory can result in excellent performance.</p>
+
+<p>In terms of throughput, tracing by its nature requires some implicit runtime overhead, though in some cases the amortized cost can be extremely low, in some cases even lower than one instruction per allocation or collection, outperforming stack allocation.[6] Manual memory management requires overhead due to explicit freeing of memory, and reference counting has overhead from incrementing and decrementing reference counts, and checking if the count has overflowed or dropped to zero.</p>
+
+<p>In terms of latency, simple stop-the-world garbage collectors pause program execution for garbage collection, which can happen at arbitrary times and take arbitrarily long, making them unusable for real-time computing, notably embedded systems, and a poor fit for interactive use, or any other situation where low latency is a priority. However, incremental garbage collectors can provide hard real-time guarantees, and on systems with frequent idle time and sufficient free memory, such as personal computers, garbage collection can be scheduled for idle times and have minimal impact on interactive performance. Manual memory management (as in C++) and reference counting have a similar issue of arbitrarily long pauses in case of deallocating a large data structure and all its children, though these only occur at fixed times, not depending on garbage collection.</p>
+
+<p>Manual heap allocation
+search for best/first-fit block of sufficient size
+free list maintenance
+Garbage collection
+locate reachable objects
+copy reachable objects for moving collectors
+read/write barriers for incremental collectors
+search for best/first-fit block and free list maintenance for non-moving collectors
+It is difficult to compare the two cases directly, as their behavior depends on the situation. For example, in the best case for a garbage collecting system, allocation just increments a pointer, but in the best case for manual heap allocation, the allocator maintains freelists of specific sizes and allocation only requires following a pointer. However, this size segregation usually cause a large degree of external fragmentation, which can have an adverse impact on cache behaviour. Memory allocation in a garbage collected language may be implemented using heap allocation behind the scenes (rather than simply incrementing a pointer), so the performance advantages listed above don’t necessarily apply in this case. In some situations, most notably embedded systems, it is possible to avoid both garbage collection and heap management overhead by preallocating pools of memory and using a custom, lightweight scheme for allocation/deallocation.[7]</p>
+
+<p>The overhead of write barriers is more likely to be noticeable in an imperative-style program which frequently writes pointers into existing data structures than in a functional-style program which constructs data only once and never changes them.</p>
+
+<p>Some advances in garbage collection can be understood as reactions to performance issues. Early collectors were stop-the-world collectors, but the performance of this approach was distracting in interactive applications. Incremental collection avoided this disruption, but at the cost of decreased efficiency due to the need for barriers. Generational collection techniques are used with both stop-the-world and incremental collectors to increase performance; the trade-off is that some garbage is not detected as such for longer than normal.</p>
+
+<p>Determinism[edit]
+Tracing garbage collection is not deterministic in the timing of object finalization. An object which becomes eligible for garbage collection will usually be cleaned up eventually, but there is no guarantee when (or even if) that will happen. This is an issue for program correctness when objects are tied to non-memory resources, whose release is an externally visible program behavior, such as closing a network connection, releasing a device or closing a file. One garbage collection technique which provides determinism in this regard is reference counting.
+Garbage collection can have a nondeterministic impact on execution time, by potentially introducing pauses into the execution of a program which are not correlated with the algorithm being processed. Under tracing garbage collection, the request to allocate a new object can sometimes return quickly and at other times trigger a lengthy garbage collection cycle. Under reference counting, whereas allocation of objects is usually fast, decrementing a reference is nondeterministic, since a reference may reach zero, triggering recursion to decrement the reference counts of other objects which that object holds.
+Real-time garbage collection[edit]
+While garbage collection is generally nondeterministic, it is possible to use it in hard real-time systems. A real-time garbage collector should guarantee that even in the worst case it will dedicate a certain number of computational resources to mutator threads. Constraints imposed on a real-time garbage collector are usually either work based or time based. A time based constraint would look like: within each time window of duration T, mutator threads should be allowed to run at least for Tm time. For work based analysis, MMU (minimal mutator utilization)[8] is usually used as a real-time constraint for the garbage collection algorithm.</p>
+
+<p>One of the first implementations of hard real-time garbage collection for the JVM was based on the Metronome algorithm,[9] whose commercial implementation is available as part of the IBM WebSphere Real Time.[10] Another hard real-time garbage collection algorithm is Staccato, available in the IBM’s J9 JVM, which also provides scalability to large multiprocessor architectures, while bringing various advantages over Metronome and other algorithms which, on the contrary, require specialized hardware.[11]</p>
+
+<h2 id="references">References</h2>
+
+<ol>
+  <li><a href="https://en.wikipedia.org/wiki/Garbage_collection_(computer_science)">Wikipedia - Garbage collection</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/Tracing_garbage_collection">Wikipedia - Tracing garbage collection</a></li>
+  <li><a href="www.cs.technion.ac.il/~erez/presentations/cycle-collection.ppt">An Efficient On-the-Fly Cycle Collection</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/Reference_counting">Wikipedia - Reference counting</a></li>
+  <li><a href="http://www.cs.cornell.edu/courses/cs412/2008sp/lectures/lec34.pdf">Cornell CS412</a></li>
+  <li><a href="http://ssw.jku.at/Misc/SSW/02.GarbageCollection.pdf">Garbage collection lecture - jku</a></li>
+  <li><a href="http://researcher.watson.ibm.com/researcher/files/us-bacon/Bacon01Concurrent.pdf">Concurrent Cycle Collection in Reference Counted Systems</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/Mark-compact_algorithm">Wikipedia - Mark and Compact</a></li>
+  <li><a href="http://the.gregor.institute/t/5n/842/slides/9.pdf">Gregor Institute CS842</a></li>
+  <li><a href="www.cs.princeton.edu/courses/archive/spr03/cs320/notes/gc2.ppt">Princeton - CS320</a></li>
+</ol>
+
+          </div>
+          <div class="article-share">
+            
+            
+            <a href="https://twitter.com/home?status=Garbage+Collection+3+-+Details+(Train+algorithm,+etc)%20-%20https://kuss.github.io/posts/garbage-collection-3-details-multhread-finalize%20by%20@ajmbell" title="Share on Twitter" rel="noreferrer noopener" target="_blank">
+              <svg viewBox="0 0 512 512"><path d="M492 109.5c-17.4 7.7-36 12.9-55.6 15.3 20-12 35.4-31 42.6-53.6 -18.7 11.1-39.4 19.2-61.5 23.5C399.8 75.8 374.6 64 346.8 64c-53.5 0-96.8 43.4-96.8 96.9 0 7.6 0.8 15 2.5 22.1 -80.5-4-151.9-42.6-199.6-101.3 -8.3 14.3-13.1 31-13.1 48.7 0 33.6 17.2 63.3 43.2 80.7C67 210.7 52 206.3 39 199c0 0.4 0 0.8 0 1.2 0 47 33.4 86.1 77.7 95 -8.1 2.2-16.7 3.4-25.5 3.4 -6.2 0-12.3-0.6-18.2-1.8 12.3 38.5 48.1 66.5 90.5 67.3 -33.1 26-74.9 41.5-120.3 41.5 -7.8 0-15.5-0.5-23.1-1.4C62.8 432 113.7 448 168.3 448 346.6 448 444 300.3 444 172.2c0-4.2-0.1-8.4-0.3-12.5C462.6 146 479 129 492 109.5z"/></svg>
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=https://kuss.github.io/posts/garbage-collection-3-details-multhread-finalize" title="Share on Facebook" rel="noreferrer noopener" target="_blank">
+              <svg viewBox="0 0 512 512"><path d="M288 192v-38.1c0-17.2 3.8-25.9 30.5-25.9H352V64h-55.9c-68.5 0-91.1 31.4-91.1 85.3V192h-45v64h45v192h83V256h56.4l7.6-64H288z"/></svg>
+            </a>
+            <a href="https://plus.google.com/share?url=https://kuss.github.io/posts/garbage-collection-3-details-multhread-finalize" title="Share on Google+" rel="noreferrer noopener" target="_blank">
+              <svg viewBox="0 0 128 128"><path d="M40.7 55.9v16.1c0 0 15.6 0 22 0C59.2 82.5 53.8 88.2 40.7 88.2c-13.3 0-23.7-10.8-23.7-24.2s10.4-24.2 23.7-24.2c7.1 0 11.6 2.5 15.8 5.9 3.3-3.3 3.1-3.8 11.6-11.9 -7.2-6.6-16.8-10.6-27.4-10.6C18.2 23.3 0 41.5 0 64c0 22.5 18.2 40.7 40.7 40.7 33.6 0 41.8-29.3 39-48.8H40.7zM113.9 56.7V42.6h-10.1v14.1H89.4v10.1h14.5v14.5h10.1V66.8H128V56.7H113.9z"/></svg>
+            </a>
+          </div>
+
+          
+        </article>
+        <footer class="footer scrollappear">
+  <p>
+    Copyright (c) 2018 by
+    <a href="/about" title="About me">Jaeman An</a>
+  </p>
+</footer>
+
+      </div>
+    </div>
+  </main>
+  
+
+<script src="/assets/vendor-77ca29175eb88027e53f89c5c8d6709faffa4d4ce9d9a6cb2a1523ace7fd87aa.js" type="text/javascript"></script>
+
+
+  <script src="/assets/webfonts-96493456d319d1bf419afdf8701552d4d486fee6afd304897d4fd81eb4e0cc0b.js" type="text/javascript"></script>
+
+
+
+  <script src="/assets/scrollappear-e2da8ea567e418637e31266cc5302126eaa79f62a2273739086358b589a89ee6.js" type="text/javascript"></script>
+
+
+<script src="/assets/application-cfde13ac81ddaf4351b2e739603e2baf688d0fcc9aba613fe62bbb1c7b037fb9.js" type="text/javascript"></script>
+
+</body>
+</html>

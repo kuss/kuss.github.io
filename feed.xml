@@ -1,20 +1,42 @@
----
----
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="https://www.w3.org/2005/Atom" xmlns:dc="https://purl.org/dc/elements/1.1/">
   <channel>
-    <title>{{ site.name | xml_escape }}</title>
-    <description>{% if site.description %}{{ site.description | xml_escape }}{% endif %}</description>
-    <link>{{ site.url }}</link>
-    <atom:link href="{{ page.path | absolute_url }}" rel="self" type="application/rss+xml" />
-    {% for post in site.posts limit:10 %}
+    <title>Jaeman An</title>
+    <description></description>
+    <link>https://kuss.github.io</link>
+    <atom:link href="https://kuss.github.io/feed.xml" rel="self" type="application/rss+xml" />
+    
       <item>
-        <title>{{ post.title | xml_escape }}</title>
-        <description>{{ post.description | xml_escape }}</description>
-        <pubDate>{{ post.date | date_to_rfc822 }}</pubDate>
-        <link>{{ post.url | absolute_url }}</link>
-        <guid isPermaLink="true">{{ post.url | absolute_url }}</guid>
+        <title>Locality sensitivity hashing</title>
+        <description></description>
+        <pubDate>Wed, 13 Jun 2018 00:00:00 +0900</pubDate>
+        <link>https://kuss.github.io/posts/locality-sensitivity-hashing</link>
+        <guid isPermaLink="true">https://kuss.github.io/posts/locality-sensitivity-hashing</guid>
       </item>
-    {% endfor %}
+    
+      <item>
+        <title>Garbage Collection 3 - Details (Train algorithm, etc)</title>
+        <description></description>
+        <pubDate>Thu, 12 Nov 2015 00:00:00 +0900</pubDate>
+        <link>https://kuss.github.io/posts/garbage-collection-3-details-multhread-finalize</link>
+        <guid isPermaLink="true">https://kuss.github.io/posts/garbage-collection-3-details-multhread-finalize</guid>
+      </item>
+    
+      <item>
+        <title>Garbage Collection 2 - Details (Reference count, Mark and sweep)</title>
+        <description></description>
+        <pubDate>Thu, 05 Nov 2015 00:00:00 +0900</pubDate>
+        <link>https://kuss.github.io/posts/garbage-collection-2-details-rc-ms</link>
+        <guid isPermaLink="true">https://kuss.github.io/posts/garbage-collection-2-details-rc-ms</guid>
+      </item>
+    
+      <item>
+        <title>Garbage Collection 1 - Introduction</title>
+        <description></description>
+        <pubDate>Thu, 29 Oct 2015 00:00:00 +0900</pubDate>
+        <link>https://kuss.github.io/posts/garbage-collection-1-introduction</link>
+        <guid isPermaLink="true">https://kuss.github.io/posts/garbage-collection-1-introduction</guid>
+      </item>
+    
   </channel>
 </rss>

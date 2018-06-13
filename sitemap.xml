@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+<loc>https://kuss.github.io/tag/machine-learning/</loc>
+<lastmod>2018-06-13T16:30:38+09:00</lastmod>
+</url>
+<url>
+<loc>https://kuss.github.io/posts/garbage-collection-1-introduction</loc>
+<lastmod>2015-10-29T00:00:00+09:00</lastmod>
+</url>
+<url>
+<loc>https://kuss.github.io/posts/garbage-collection-2-details-rc-ms</loc>
+<lastmod>2015-11-05T00:00:00+09:00</lastmod>
+</url>
+<url>
+<loc>https://kuss.github.io/posts/garbage-collection-3-details-multhread-finalize</loc>
+<lastmod>2015-11-12T00:00:00+09:00</lastmod>
+</url>
+<url>
+<loc>https://kuss.github.io/posts/locality-sensitivity-hashing</loc>
+<lastmod>2018-06-13T00:00:00+09:00</lastmod>
+</url>
+<url>
+<loc>https://kuss.github.io/about/</loc>
+</url>
+<url>
+<loc>https://kuss.github.io/</loc>
+</url>
+</urlset>
