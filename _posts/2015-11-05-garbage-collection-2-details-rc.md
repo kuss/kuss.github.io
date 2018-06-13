@@ -62,8 +62,15 @@ tags: ["software engineering", "garbage collection", "programming language"]
  - grey: GC에 의해 검토중인 object 
  - red: GC에 의해 검토되야 하는 object 
 
- reference를 증가시킬때와 감소시킬때, 각 node (object) 에 coloring을 한다. reference를 증가시킬때는 간단히 count를 증가시키로 black으로 마킹한다. reference를 감소시킬 때 count가 0이 되면, color를 white로 채우고 deallocation을 한다. 만약에 count가 0이 아니라면, red로 마킹하고 garbage collection 후보에 등록한다. 후에 garbage collection이 이루어 질때, 색깔이 red인 node에 대해 mark, sweep, collectWhite의 과정을 거친다.
-
+ reference를 증가시킬때와 감소시킬때, 각 node (object) 에 coloring을 한다.
+ - reference를 증가시킬 때: count를 증가시키고 black으로 마킹한다.
+```cpp
+void incRef(Obj p) {
+  p.count++;
+  p.color = black;
+}
+```
+ - reference를 감소시킬 때: count를 감소시킨다. count가 0이 되면, color를 white로 채우고 deallocation을 한다. 만약에 count가 0이 아니라면, red로 마킹하고 garbage collection 후보에 등록한다. 
 ```cpp
 void decRef(Obj p) {
   p.count--;
@@ -76,12 +83,9 @@ void decRef(Obj p) {
     gcList.add(p);
   }
 }
-
-void incRef(Obj p) {
-  p.count++;
-  p.color = black;
-}
-
+```
+ - garbage collection이 이루어 질때, 색깔이 red인 node에 대해 mark, sweep, collectWhite의 과정을 거친다.
+```cpp
 void gc() {
   do
     p = gcList.remove()
@@ -94,13 +98,16 @@ void gc() {
 }
 ```
 
- mark, sweep, collectWhite은 아래와 같이 이루어진다.
- * mark 단계
+ colloring이 끝난 다음, mark, sweep, collectWhite과정을 수행한다.
+
+ - mark 단계
    - red node부터 시작한다.
    - 이 node를 grey로 칠하고, 참조하는 node 수만큼 count를 감소시킨다. 
    - 참조하는 node들로 따라가면서 이전 단계를 반복한다.
 
- 이 과정을 반복하면, 각 node에서 참조하는 node 수 만큼 count를 줄일 수 있다. 즉, 만약 내가 참조되는 node와 내가 참조하는 node의 수가 같다면, count가 0이 될 것이다. 
+ {% include image.html path="documentation/lins_algorithm_mark.png" %}
+
+ 이 과정을 반복하면, 각 node에서 참조하는 node 수 만큼 count를 줄일 수 있다. 이를 코드로 표현하면 다음과 같다.
 
 ```cpp
 void mark(Obj p) {
@@ -111,7 +118,9 @@ void mark(Obj p) {
 }
 ```
 
- sweep 과정에서는 count가 0이 된 node들을 white로 바꾼다. 이 때, count가 1 이상이라면 restore과정을 커진다. restore 과정에서는 나 자신을 black으로 바꾸고, 내가 참조하는 다른 black이 아닌 node들을 다시 restore (count 증가, black 마킹) 과정을 거친다.
+ - sweep 단계
+   - count가 0이 된 node: white로 바꾼다.
+   - count가 1이상 인 node: restore과정을 커진다. 
 
 ```cpp
 void sweep(Obj p) {
@@ -122,7 +131,11 @@ void sweep(Obj p) {
     } else restore(p);
   }
 }
+```
+ - restore 단계
+    - 나 자신을 black으로 바꾸고, 내가 참조하는 다른 black이 아닌 node들을 다시 restore (count 증가, black 마킹) 과정을 거친다.
 
+```cpp
 void restore(Obj p) {
   p.color = black;
   for (all sons q) {
@@ -132,7 +145,10 @@ void restore(Obj p) {
 }
 ```
 
- collectWhite 과정에서는 white인 node를 dealloc 한다.
+ {% include image.html path="documentation/lins_algorithm_sweep.png" %}
+
+ - collectWhite 단계
+   - 이제 white인 node를 dealloc 한다.
 
 ```cpp
 void collectWhite(Obj p) {
@@ -144,10 +160,24 @@ void collectWhite(Obj p) {
 }
 ```
 
+ 이 과정을 수행하면 cycle referencing된 node들 모두 dealloc이 가능해진다.
+
 #### Bacon's algorithm
 
- Bacon's algorithm은 이 [논문](http://researcher.watson.ibm.com/researcher/files/us-bacon/Bacon01Concurrent.pdf) 에서 자세한 내용을 볼 수 있다.
- 기본적으로 좀더 빠르고 cache가 잘 작동하도록 만든 알고리즘이며, object의 reference count가 0이 아닌 어떤 value로 decrement하기 전까지 cycle이 만들어지지는 않는다는 사실에 착안하였다. root list에 있는 모든 object를 주기적으로 돌면서, 도달 가능한 cycle을 찾는다. [좀 더 발전한 알고리즘](researcher.watson.ibm.com/researcher/files/us-bacon/Paz05Efficient.pdf)을 Paz et al이 발표하였는데, 다른 operation들과 concurrent하게 작동가능하며 Lavanoni and Petrank가 발표한 update coalescing method를 사용하여 효율성을 증대시키는 알고리즘이다.
+ Bacon's algorithm은 Lins algorithm와 비슷한 로직으로 동작하는 알고리즘이나, worst-case에서 $O(N+E)$ 만큼의 시간복잡도를 가지도록 optimize하였다. 여기서 잠깐 lins algorithm의 시간복잡도를 체크해보면, 최악의 경우 $O(N^2)$의 시간복잡도를 가진다.
+
+{% include image.html path="documentation/lins_algorithm_worst.png" %}
+*Example of compound cycle that causes Lins’ algorithm to exhibit quadratic complexity, from bacon's alg*
+
+ 이 경우 4가지 node는 모두 cycle reference를 가지고 있으므로 gc의 대상이다. 왼쪽부터 mark를 한다고 하면, 처음에는 자기자신만 refcount를 감소시키므로 1번, 두번째는 자기자신과 왼쪽의 refcount를 감소시키므로 2번, ... 해서 마지막에서는 n번의 mark 과정을 거치게 되므로 결국에는 $O(N^2)$의 시간복잡도를 가지게 된다.
+
+ Lins algorithm에서는 최적화를 크게 2가지 변경사항이 있는데, 
+ - 모든 object에 buffered flag를 둬서 root buffer에 같은 cycle 안에 있는 object가 root buffer에 중복해서 들어가지 않도록 했다. 이는 root buffer의 size를 제한하는 역할을 한다.
+ - 전체 Roots에 포함된 transitive closure graph를 하나의 graph로 취급하여 작동하도록 한다. 이는 전체 시간복잡도를 $O(N+E)$ 로 제한시키는 역할을 한다. (buffered flag로 인해 root의 size 는 N으로 제한됨)
+
+ 이 알고리즘은 크게 어렵지는 않으나 복잡하고 내용이 많아 생략한다. [논문](http://researcher.watson.ibm.com/researcher/files/us-bacon/Bacon01Concurrent.pdf) 5-8 페이지에서 자세한 내용을 볼 수 있다. 또한, 논문의 뒷부분에서는 concurrent cycle detection에 관한 내용을 다룬다.
+
+ [좀 더 발전한 알고리즘](http://researcher.watson.ibm.com/researcher/files/us-bacon/Paz05Efficient.pdf)을 Paz et al이 발표하였다. 현재로서는 reference counting 계열에서는 (아마) state-of-the-art라고 불리우며, 자세한 내용은 다음에 다뤄보도록 하겠다.
 
 ### Variants of reference counting
 
@@ -169,8 +199,8 @@ void collectWhite(Obj p) {
 
  이 경우에서도, network의 딜레이로 인해 garbage collection 타이밍을 잡기 난감해 졌다. 분산시스템에서 reference count의 가장 큰 문제점은 reference를 관리하는 곳과 사용하는 곳 사이의 네트워크 딜레이/타이밍 문제로 인해서 생긴다. 이 때 weighted reference counting 기법이 용이하게 쓰인다.
 
- 1. Object O가 만들어지면, total weight를 매우 크게 (예를들어, 2^16) 잡는다. Object는 total weight와 partial weight를 가지고 있다.
- 2. 새로운 reference가 copy되면, partial weight의 절반을 가져간다. 즉, 원래의 reference의 partial weight는 2^15가 되고, 새로 만들어지는 reference의 partial weight는 2^15가 된다.
+ 1. Object O가 만들어지면, total weight를 매우 크게 (예를들어, $2^16$) 잡는다. Object는 total weight와 partial weight를 가지고 있다.
+ 2. 새로운 reference가 copy되면, partial weight의 절반을 가져간다. 즉, 원래의 reference의 partial weight는 $2^15$가 되고, 새로 만들어지는 reference의 partial weight는 $2^15$가 된다.
  3. 만약 reference가 move되면, partial weight를 가져간다. 이 과정을 통해 partial weight의 합을 total weight와 같게 보존한다.
  4. reference가 사라지면, total weight에서 해당 reference가 가지고 있던 partial weight만큼을 줄인다.
  5. 원본 Object O의 Total weight가 partial weight와 같아지면, 다른 곳에서 참조하고 있지 않으므로, GC가 된다.
@@ -181,14 +211,17 @@ void collectWhite(Obj p) {
 
 #### Indirect reference counting
 
- Indirect reference counting 역시, 분산 시스템(distributed reference count)에서 많이 쓰이는 GC 기법이다. 이 알고리즘은 누가 해당 reference를 가져갔는지 track한다. 처음 만들어질 때 object에 2개의 reference가 저장되는데, 하나는 만들어진 쪽에 전달하고, 다른 하나는 diffusion tree, (Dijkstra-Scholten algorithm)에 전달되어, garbage collector로 부터 dead object인지 판별되는 곳에 쓰인다. 이를 통해 object가 아직 사용중인데 GC되는 것을 방지한다. TODO: 내용 추가 
+ Indirect reference counting 역시, 분산 시스템(distributed reference count)에서 많이 쓰이는 GC 기법이다. 이 알고리즘은 누가 해당 reference를 가져갔는지 track한다. 처음 만들어질 때 object에 2개의 reference가 저장되는데, 하나는 만들어진 쪽에 전달하고, 다른 하나는 diffusion tree, (Dijkstra-Scholten algorithm)에 전달되어, garbage collector로 부터 dead object인지 판별되는 곳에 쓰인다. 이를 통해 object가 아직 사용중인데 GC되는 것을 방지한다. 
+
+##### Dijkstra-Scholten algorithm
+
 
 
 ## References
 
  1. [Wikipedia - Garbage collection](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science))
  2. [Wikipedia - Tracing garbage collection](https://en.wikipedia.org/wiki/Tracing_garbage_collection)
- 3. [An Efficient On-the-Fly Cycle Collection](www.cs.technion.ac.il/~erez/presentations/cycle-collection.ppt)
+ 3. [An Efficient On-the-Fly Cycle Collection](http://www.cs.technion.ac.il/~erez/presentations/cycle-collection.ppt)
  4. [Wikipedia - Reference counting](https://en.wikipedia.org/wiki/Reference_counting)
  5. [Cornell CS412](http://www.cs.cornell.edu/courses/cs412/2008sp/lectures/lec34.pdf)
  6. [Garbage collection lecture - jku](http://ssw.jku.at/Misc/SSW/02.GarbageCollection.pdf)
