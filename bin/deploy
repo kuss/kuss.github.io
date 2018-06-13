@@ -8,7 +8,8 @@ set -e
 echo "Started deploying"
 
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-git checkout master
+git branch -D master
+git checkout -b master
 git merge $BRANCH_NAME
 
 # Build site.
