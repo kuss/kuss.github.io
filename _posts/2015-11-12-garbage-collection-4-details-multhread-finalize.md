@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Garbage Collection 3 - Details (Train algorithm, etc)"
+title: "Garbage Collection 4 - Details (Train algorithm, etc)"
 description: ""
 date: 2015-11-12
 categories: 

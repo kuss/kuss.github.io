@@ -4,7 +4,7 @@ title: "Garbage Collection 1 - Introduction"
 description: ""
 date: 2015-10-29
 categories: language
-tags: ["software engineering", "garbage collection", "language"]
+tags: ["software engineering", "garbage collection", "programming language"]
 ---
 
 ## Introduction
